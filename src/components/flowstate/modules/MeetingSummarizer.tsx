@@ -36,23 +36,53 @@ function ConfidenceBadge({ score }: { score: number }) {
 }
 
 export function MeetingSummarizer() {
+  const { meetingPrefill, setMeetingPrefill, setSettingsOpen } = useApp();
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [tab, setTab] = useState<"summary" | "actions" | "decisions">("summary");
 
-  const run = () => {
+  useEffect(() => {
+    if (meetingPrefill?.notes) {
+      setNotes(meetingPrefill.notes);
+      setMeetingPrefill(null);
+    }
+  }, [meetingPrefill, setMeetingPrefill]);
+
+  const run = async () => {
     if (!notes.trim()) {
       toast.error("Paste some notes first.");
       return;
     }
     setLoading(true);
     setResult(null);
-    setTimeout(() => {
-      setResult(summarize(notes));
-      setLoading(false);
+    try {
+      const data = await aiClient.summarizeNotes({ notes });
+      setResult({
+        summary: data.summary,
+        actions: data.action_items.map((a, i) => ({
+          id: `a${i}`,
+          text: a.task ?? "",
+          owner: a.owner ?? "Unassigned",
+          due: a.deadline ?? "TBD",
+          done: false,
+          confidence: typeof a.confidence === "number" ? Math.max(0, Math.min(1, a.confidence)) : 0.5,
+        })),
+        decisions: data.decisions.map((d, i) => ({
+          id: `d${i}`,
+          text: d.text ?? "",
+          confidence: typeof d.confidence === "number" ? Math.max(0, Math.min(1, d.confidence)) : 0.5,
+        })),
+        followUp: data.follow_up ?? [],
+      });
       toast.success("Notes summarized");
-    }, 1100);
+    } catch (err) {
+      const e = err as ApiError;
+      toast.error(e.message);
+      if (e.isMissingKey) setSettingsOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleDone = (id: string) => {
