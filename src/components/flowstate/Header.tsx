@@ -1,21 +1,30 @@
 import { useApp } from "./state";
 import { MODULES } from "./Sidebar";
-import { Moon, Sun, MessageSquare, Menu, Workflow } from "lucide-react";
+import { Moon, Sun, MessageSquare, Menu, Workflow, Settings } from "lucide-react";
 
 export function Header() {
-  const { dark, toggleDark, module, setChatOpen, toggleSidebar, focusMode } = useApp();
+  const { dark, toggleDark, module, setChatOpen, toggleSidebar, focusMode, setSettingsOpen } = useApp();
   const current = MODULES.find((m) => m.id === module);
   if (focusMode) {
     return (
       <header className="h-14 border-b border-border bg-surface px-4 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Focus Mode — press Esc to exit</span>
-        <button
-          onClick={toggleDark}
-          className="grid place-items-center h-9 w-9 rounded-lg hover:bg-muted text-foreground"
-          aria-label="Toggle dark mode"
-        >
-          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="grid place-items-center h-9 w-9 rounded-lg hover:bg-muted text-foreground"
+            aria-label="Open settings"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+          <button
+            onClick={toggleDark}
+            className="grid place-items-center h-9 w-9 rounded-lg hover:bg-muted text-foreground"
+            aria-label="Toggle dark mode"
+          >
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
       </header>
     );
   }
@@ -47,6 +56,14 @@ export function Header() {
           <MessageSquare className="h-4 w-4" />
           <span>Ask AI</span>
           <kbd className="ml-1 px-1.5 py-0.5 rounded bg-surface-muted text-[10px] border border-border">⌘K</kbd>
+        </button>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="grid place-items-center h-9 w-9 rounded-lg hover:bg-muted text-foreground transition-colors"
+          aria-label="Open settings"
+          title="Settings (OpenAI API key)"
+        >
+          <Settings className="h-4 w-4" />
         </button>
         <button
           onClick={toggleDark}
