@@ -170,12 +170,29 @@ export function MeetingSummarizer() {
             </div>
 
             {tab === "summary" && (
-              <textarea
-                value={result.summary}
-                onChange={(e) => setResult({ ...result, summary: e.target.value })}
-                rows={6}
-                className="w-full p-3 rounded-lg border border-input bg-surface text-sm leading-relaxed focus:border-ring outline-none"
-              />
+              <div className="space-y-4">
+                <textarea
+                  value={result.summary}
+                  onChange={(e) => setResult({ ...result, summary: e.target.value })}
+                  rows={6}
+                  className="w-full p-3 rounded-lg border border-input bg-surface text-sm leading-relaxed focus:border-ring outline-none"
+                />
+                {result.followUp.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                      Follow-up questions
+                    </h3>
+                    <ul className="space-y-1.5">
+                      {result.followUp.map((q, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="mt-0.5 text-primary font-semibold">?</span>
+                          <span>{q}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             )}
 
             {tab === "actions" && (
