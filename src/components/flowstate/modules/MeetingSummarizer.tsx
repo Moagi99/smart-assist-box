@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApp } from "../state";
 import { DisclaimerBanner, SectionShell, SkeletonLines, EmptyState } from "../shared";
 import { FileText, Download, Mail, Sparkles, RotateCcw, Info } from "lucide-react";
 import { toast } from "sonner";
+import { aiClient, ApiError } from "@/lib/aiClient";
 
 type ActionItem = { id: string; text: string; owner: string; due: string; done: boolean; confidence: number };
 type Decision = { id: string; text: string; confidence: number };
-type Result = { summary: string; actions: ActionItem[]; decisions: Decision[] };
+type Result = { summary: string; actions: ActionItem[]; decisions: Decision[]; followUp: string[] };
 
 const SAMPLE_NOTES = `Team standup - Sept 23
 Attendees: Maya (PM), Tom (Eng), Priya (Design), Alex (Marketing)
@@ -18,35 +20,6 @@ Attendees: Maya (PM), Tom (Eng), Priya (Design), Alex (Marketing)
 - Decision: Marketing gets feature list by Oct 1, no exceptions.
 - Action: Tom to send Priya auth wireframes today.
 - Maya to update roadmap doc by Thursday.`;
-
-function summarize(notes: string): Result {
-  // Placeholder. Real model call would go here.
-  const lines = notes.split("\n").map((l) => l.trim()).filter(Boolean);
-  const actionLines = lines.filter((l) => /action|will|todo|need(s)?\s|by\s+\w/i.test(l));
-  const decisionLines = lines.filter((l) => /^decision/i.test(l));
-  return {
-    summary:
-      "The team reviewed Q3 launch slippage and agreed to lock scope by Friday. Engineering is blocked on auth migration pending design input. Marketing needs a finalized feature list before the Oct 5 press embargo. Dark mode was cut from launch to protect timeline.",
-    actions: actionLines.slice(0, 5).map((l, i) => ({
-      id: `a${i}`,
-      text: l.replace(/^[-•]\s*/, "").replace(/^(Action:?\s*)/i, ""),
-      owner: ["Tom", "Maya", "Priya", "Alex", "Team"][i % 5],
-      due: ["Wed", "Thu", "Fri", "Oct 1", "Oct 5"][i % 5],
-      done: false,
-      confidence: 0.6 + (i % 4) * 0.1,
-    })),
-    decisions: decisionLines.length
-      ? decisionLines.map((l, i) => ({
-          id: `d${i}`,
-          text: l.replace(/^decision:?\s*/i, ""),
-          confidence: 0.75 + (i % 3) * 0.08,
-        }))
-      : [
-          { id: "d0", text: "Cut dark mode from launch; revisit Q4.", confidence: 0.92 },
-          { id: "d1", text: "Final feature list to marketing by Oct 1.", confidence: 0.88 },
-        ],
-  };
-}
 
 function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
