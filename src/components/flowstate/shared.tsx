@@ -74,8 +74,8 @@ export function EmptyState({
 }: {
   title: string;
   description: string;
-  sampleLabel: string;
-  onSample: () => void;
+  sampleLabel?: string;
+  onSample?: () => void;
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
@@ -85,12 +85,14 @@ export function EmptyState({
       </div>
       <h3 className="text-sm font-semibold">{title}</h3>
       <p className="text-sm text-muted-foreground mt-1 max-w-sm">{description}</p>
-      <button
-        onClick={onSample}
-        className="mt-4 inline-flex items-center h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-      >
-        {sampleLabel}
-      </button>
+      {sampleLabel && onSample && (
+        <button
+          onClick={onSample}
+          className="mt-4 inline-flex items-center h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          {sampleLabel}
+        </button>
+      )}
     </div>
   );
 }
