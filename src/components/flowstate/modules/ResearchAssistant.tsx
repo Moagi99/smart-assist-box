@@ -1,34 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApp } from "../state";
 import { DisclaimerBanner, SectionShell, SkeletonLines, EmptyState } from "../shared";
 import { Search, Sparkles, RotateCcw, ShieldCheck, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-
-type Research = {
-  tldr: string;
-  claims: { text: string; strength: "strong" | "moderate" | "weak"; counter?: string }[];
-  evidence: string;
-  bias: string[];
-  recommendations: string[];
-};
-
-function analyze(): Research {
-  // Placeholder. Real model call would replace this.
-  return {
-    tldr: "The article argues that remote work boosts productivity, citing a 13% gain from one 2015 study. Evidence is real but narrow — single industry, pre-pandemic, self-reported metrics.",
-    claims: [
-      { text: "Remote workers are 13% more productive than office workers.", strength: "moderate", counter: "The cited Bloom study covered call-center workers at one Chinese travel firm; gains may not generalize to knowledge work." },
-      { text: "Remote work reduces operational costs by 30%.", strength: "weak", counter: "Figure conflates real estate savings with productivity gains; no independent replication cited." },
-      { text: "Employee retention improves with flexible work arrangements.", strength: "strong" },
-    ],
-    evidence: "Mixed. Two primary sources are peer-reviewed; three are blog posts from companies selling remote-work software.",
-    bias: ["Cites only pro-remote sources", "No discussion of collaboration or onboarding tradeoffs", "Author works at a remote-first company"],
-    recommendations: [
-      "Cross-check the 13% figure against post-2020 studies before quoting.",
-      "Note that benefits vary by role — engineering ≠ sales ≠ design.",
-      "Look for at least one credible counter-source before sharing.",
-    ],
-  };
-}
+import { aiClient, ApiError, type ResearchResponse } from "@/lib/aiClient";
 
 const STRENGTH_STYLE = {
   strong: "bg-success/10 text-success",
@@ -37,16 +12,34 @@ const STRENGTH_STYLE = {
 } as const;
 
 export function ResearchAssistant() {
+  const { researchPrefill, setResearchPrefill, setSettingsOpen } = useApp();
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<Research | null>(null);
+  const [result, setResult] = useState<ResearchResponse | null>(null);
   const [skeptic, setSkeptic] = useState(false);
 
-  const run = () => {
+  useEffect(() => {
+    if (researchPrefill?.text) {
+      setText(researchPrefill.text);
+      setResearchPrefill(null);
+    }
+  }, [researchPrefill, setResearchPrefill]);
+
+  const run = async () => {
     if (!text.trim()) { toast.error("Paste an article or URL first."); return; }
     setLoading(true);
     setResult(null);
-    setTimeout(() => { setResult(analyze()); setLoading(false); toast.success("Analysis ready"); }, 1100);
+    try {
+      const data = await aiClient.analyzeResearch({ text, skeptic });
+      setResult(data);
+      toast.success("Analysis ready");
+    } catch (err) {
+      const e = err as ApiError;
+      toast.error(e.message);
+      if (e.isMissingKey) setSettingsOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,9 +57,6 @@ export function ResearchAssistant() {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button onClick={run} disabled={loading} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-60">
             <Sparkles className="h-4 w-4" /> {loading ? "Analyzing…" : "Analyze"}
-          </button>
-          <button onClick={() => setText("https://example.com/remote-work-productivity-study — Remote work is the future. New data shows 13% productivity gains, 30% cost savings, and happier employees…")} className="inline-flex items-center h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-muted">
-            Load sample
           </button>
           <label className="ml-auto inline-flex items-center gap-2 text-sm cursor-pointer">
             <span className="text-muted-foreground">Skeptic mode</span>
@@ -102,8 +92,6 @@ export function ResearchAssistant() {
             icon={Search}
             title="Your analysis will appear here"
             description="We'll surface key claims, evidence quality, and bias flags."
-            sampleLabel="Try a sample"
-            onSample={() => setText("Sample article text about remote work productivity studies.")}
           />
         ) : (
           <div className="space-y-5">
@@ -114,16 +102,16 @@ export function ResearchAssistant() {
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Key claims</h3>
               <ul className="space-y-2">
-                {result.claims.map((c, i) => (
+                {result.key_claims.map((c, i) => (
                   <li key={i} className="p-3 rounded-lg border border-border bg-background">
                     <div className="flex items-start gap-2">
-                      <span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${STRENGTH_STYLE[c.strength]}`}>{c.strength}</span>
+                      <span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${STRENGTH_STYLE[c.strength] ?? STRENGTH_STYLE.moderate}`}>{c.strength}</span>
                       <p className="text-sm flex-1">{c.text}</p>
                     </div>
-                    {skeptic && c.counter && c.strength !== "strong" && (
+                    {skeptic && c.counter_argument && (
                       <div className="mt-2 ml-1 flex items-start gap-1.5 text-xs text-muted-foreground border-l-2 border-destructive/40 pl-3">
                         <AlertTriangle className="h-3 w-3 mt-0.5 text-destructive shrink-0" />
-                        <span><span className="font-medium text-foreground">Counter:</span> {c.counter}</span>
+                        <span><span className="font-medium text-foreground">Counter:</span> {c.counter_argument}</span>
                       </div>
                     )}
                   </li>
@@ -133,12 +121,12 @@ export function ResearchAssistant() {
             <div className="grid md:grid-cols-2 gap-5">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Evidence quality</h3>
-                <p className="text-sm leading-relaxed">{result.evidence}</p>
+                <p className="text-sm leading-relaxed">{result.evidence_quality}</p>
               </div>
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Bias flags</h3>
                 <ul className="space-y-1.5">
-                  {result.bias.map((b, i) => (
+                  {result.bias_flags.map((b, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
                       <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-warning shrink-0" />
                       <span>{b}</span>
