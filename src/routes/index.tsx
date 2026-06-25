@@ -8,6 +8,7 @@ import { EmailGenerator } from "@/components/flowstate/modules/EmailGenerator";
 import { MeetingSummarizer } from "@/components/flowstate/modules/MeetingSummarizer";
 import { TaskPlanner } from "@/components/flowstate/modules/TaskPlanner";
 import { ResearchAssistant } from "@/components/flowstate/modules/ResearchAssistant";
+import { SettingsPanel } from "@/components/flowstate/SettingsPanel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,6 +52,7 @@ function Shell() {
       </div>
       <MobileTabBar />
       <Chatbot />
+      <SettingsPanel />
     </div>
   );
 }
