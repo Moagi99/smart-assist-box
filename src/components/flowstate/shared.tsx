@@ -1,7 +1,7 @@
 import { useApp, type ModuleId } from "./state";
 import { ShieldAlert, X } from "lucide-react";
 
-export function DisclaimerBanner({ moduleId }: { moduleId: ModuleId }) {
+export function DisclaimerBanner({ moduleId }: { moduleId: Exclude<ModuleId, "analytics"> }) {
   const { dismissedBanner, dismissBanner } = useApp();
   if (dismissedBanner[moduleId]) return null;
   return (

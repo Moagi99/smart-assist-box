@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 
-export type ModuleId = "email" | "meeting" | "tasks" | "research";
+export type ModuleId = "email" | "meeting" | "tasks" | "research" | "analytics";
 
 export type EmailPrefill = {
   recipientRole?: string;
@@ -26,6 +26,10 @@ type AppState = {
   setFocusMode: (v: boolean) => void;
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean) => void;
+  shortcutsOpen: boolean;
+  setShortcutsOpen: (v: boolean) => void;
+  helpOpen: boolean;
+  setHelpOpen: (v: boolean) => void;
   emailPrefill: EmailPrefill | null;
   setEmailPrefill: (p: EmailPrefill | null) => void;
   meetingPrefill: MeetingPrefill | null;
@@ -34,8 +38,8 @@ type AppState = {
   setTaskPrefill: (p: TaskPrefill | null) => void;
   researchPrefill: ResearchPrefill | null;
   setResearchPrefill: (p: ResearchPrefill | null) => void;
-  dismissedBanner: Record<ModuleId, boolean>;
-  dismissBanner: (m: ModuleId) => void;
+  dismissedBanner: Record<Exclude<ModuleId, "analytics">, boolean>;
+  dismissBanner: (m: Exclude<ModuleId, "analytics">) => void;
 };
 
 const AppCtx = createContext<AppState | null>(null);
@@ -47,15 +51,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [emailPrefill, setEmailPrefill] = useState<EmailPrefill | null>(null);
   const [meetingPrefill, setMeetingPrefill] = useState<MeetingPrefill | null>(null);
   const [taskPrefill, setTaskPrefill] = useState<TaskPrefill | null>(null);
   const [researchPrefill, setResearchPrefill] = useState<ResearchPrefill | null>(null);
-  const [dismissedBanner, setDismissed] = useState<Record<ModuleId, boolean>>({
+  const [dismissedBanner, setDismissed] = useState<Record<Exclude<ModuleId, "analytics">, boolean>>({
     email: false, meeting: false, tasks: false, research: false,
   });
 
-  // hydrate
   useEffect(() => {
     try {
       const d = localStorage.getItem("flowstate.dark");
@@ -74,11 +79,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem("flowstate.sidebar", sidebarCollapsed ? "1" : "0"); } catch {}
   }, [sidebarCollapsed]);
 
-  const dismissBanner = useCallback((m: ModuleId) => {
+  const dismissBanner = useCallback((m: Exclude<ModuleId, "analytics">) => {
     setDismissed((prev) => ({ ...prev, [m]: true }));
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const meta = e.metaKey || e.ctrlKey;
@@ -87,15 +91,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setChatOpen((v) => !v);
         return;
       }
-      if (meta && ["1", "2", "3", "4"].includes(e.key)) {
+      if (meta && (e.key === "/" || e.key === "?")) {
         e.preventDefault();
-        const map: ModuleId[] = ["email", "meeting", "tasks", "research"];
+        setShortcutsOpen((v) => !v);
+        return;
+      }
+      if (meta && ["1", "2", "3", "4", "5"].includes(e.key)) {
+        e.preventDefault();
+        const map: ModuleId[] = ["email", "meeting", "tasks", "research", "analytics"];
         setModule(map[parseInt(e.key, 10) - 1]);
         return;
       }
       if (e.key === "Escape") {
         setChatOpen(false);
         setFocusMode(false);
+        setShortcutsOpen(false);
+        setHelpOpen(false);
       }
     };
     window.addEventListener("keydown", handler);
@@ -109,6 +120,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     chatOpen, setChatOpen,
     focusMode, setFocusMode,
     settingsOpen, setSettingsOpen,
+    shortcutsOpen, setShortcutsOpen,
+    helpOpen, setHelpOpen,
     emailPrefill, setEmailPrefill,
     meetingPrefill, setMeetingPrefill,
     taskPrefill, setTaskPrefill,

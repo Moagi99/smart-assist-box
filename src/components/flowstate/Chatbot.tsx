@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useApp, type ModuleId } from "./state";
 import { TypingDots } from "./shared";
 import { aiClient, ApiError, type ChatTurn } from "@/lib/aiClient";
+import { trackUse } from "@/lib/analytics";
 import { MessageSquare, X, Send, Trash2, Mail, FileText, CalendarDays, Search, Workflow } from "lucide-react";
 
-type Route = { module: ModuleId; label: string; prefill: Record<string, string> } | null;
+type ChatModule = Exclude<ModuleId, "analytics">;
+type Route = { module: ChatModule; label: string; prefill: Record<string, string> } | null;
 
 type Msg = {
   id: string;
@@ -13,10 +15,10 @@ type Msg = {
   route?: Route;
 };
 
-const MODULE_ICON: Record<ModuleId, typeof Mail> = {
+const MODULE_ICON: Record<ChatModule, typeof Mail> = {
   email: Mail, meeting: FileText, tasks: CalendarDays, research: Search,
 };
-const MODULE_LABEL: Record<ModuleId, string> = {
+const MODULE_LABEL: Record<ChatModule, string> = {
   email: "Email Generator", meeting: "Meeting Notes", tasks: "Task Planner", research: "Research Assistant",
 };
 
@@ -68,6 +70,7 @@ export function Chatbot() {
         route: route ?? undefined,
       };
       setMessages((prev) => [...prev.slice(-9), assistantMsg]);
+      trackUse("chat");
     } catch (err) {
       const e = err as ApiError;
       const assistantMsg: Msg = {
