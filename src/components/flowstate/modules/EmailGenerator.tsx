@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../state";
 import { DisclaimerBanner, SectionShell, SkeletonLines, EmptyState } from "../shared";
-import { Mail, Copy, RotateCcw, Undo2, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Mail, Copy, RotateCcw, Undo2, Sparkles, Eye, EyeOff, Download } from "lucide-react";
 import { toast } from "sonner";
 import { aiClient, ApiError } from "@/lib/aiClient";
+import { TypedText } from "../typing";
+import { copyText, downloadBlob } from "@/lib/exports";
+import { trackUse } from "@/lib/analytics";
+import { Flash, useFlash } from "../Flash";
 
 type Tone = "Formal" | "Friendly" | "Persuasive" | "Diplomatic";
 const TONES: Tone[] = ["Formal", "Friendly", "Persuasive", "Diplomatic"];
@@ -25,6 +29,8 @@ export function EmailGenerator() {
   const [output, setOutput] = useState("");
   const [original, setOriginal] = useState("");
   const [preview, setPreview] = useState(false);
+  const [typed, setTyped] = useState(true);
+  const [flash, fire] = useFlash();
 
   useEffect(() => {
     if (emailPrefill) {
@@ -43,15 +49,18 @@ export function EmailGenerator() {
     }
     setLoading(true);
     setOutput("");
+    setTyped(false);
     try {
       const { email } = await aiClient.generateEmail({ recipientRole, subject, context, tone });
       setOutput(email);
       setOriginal(email);
+      trackUse("email");
       toast.success("Email drafted");
     } catch (err) {
       const e = err as ApiError;
       toast.error(e.message);
       if (e.isMissingKey) setSettingsOpen(true);
+      setTyped(true);
     } finally {
       setLoading(false);
     }
@@ -65,8 +74,15 @@ export function EmailGenerator() {
   };
 
   const copy = async () => {
-    await navigator.clipboard.writeText(output);
-    toast.success("Copied to clipboard");
+    try { await copyText(output); fire("success"); toast.success("Copied to clipboard"); }
+    catch { toast.error("Could not copy"); }
+  };
+
+  const download = () => {
+    const filename = `email-${(subject || "draft").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}.txt`;
+    downloadBlob(output, filename, "text/plain;charset=utf-8");
+    fire("success");
+    toast.success("Downloaded");
   };
 
   return (
@@ -158,7 +174,14 @@ export function EmailGenerator() {
                 className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs border border-border hover:bg-muted"
               >
                 <Copy className="h-3.5 w-3.5" />
-                Copy
+                Copy<Flash kind={flash} />
+              </button>
+              <button
+                onClick={download}
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs border border-border hover:bg-muted"
+              >
+                <Download className="h-3.5 w-3.5" />
+                .txt
               </button>
               <button
                 onClick={handleGenerate}
@@ -198,6 +221,12 @@ export function EmailGenerator() {
             </div>
             <pre className="whitespace-pre-wrap font-sans text-sm p-4 leading-relaxed">{output}</pre>
           </div>
+        ) : !typed ? (
+          <TypedText
+            text={output}
+            className="text-sm font-sans leading-relaxed p-3 rounded-lg border border-input bg-surface min-h-[200px]"
+            onDone={() => setTyped(true)}
+          />
         ) : (
           <textarea
             value={output}

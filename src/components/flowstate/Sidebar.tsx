@@ -1,5 +1,5 @@
 import { useApp, type ModuleId } from "./state";
-import { Mail, FileText, CalendarDays, Search, Menu, Workflow } from "lucide-react";
+import { Mail, FileText, CalendarDays, Search, Menu, Workflow, BarChart3, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const MODULES: { id: ModuleId; label: string; icon: typeof Mail; hint: string }[] = [
@@ -7,10 +7,11 @@ export const MODULES: { id: ModuleId; label: string; icon: typeof Mail; hint: st
   { id: "meeting", label: "Meeting Notes", icon: FileText, hint: "⌘2" },
   { id: "tasks", label: "Task Planner", icon: CalendarDays, hint: "⌘3" },
   { id: "research", label: "Research Assistant", icon: Search, hint: "⌘4" },
+  { id: "analytics", label: "Analytics", icon: BarChart3, hint: "⌘5" },
 ];
 
 export function Sidebar() {
-  const { module, setModule, sidebarCollapsed, toggleSidebar, focusMode } = useApp();
+  const { module, setModule, sidebarCollapsed, toggleSidebar, focusMode, setHelpOpen } = useApp();
   if (focusMode) return null;
   return (
     <aside
@@ -65,10 +66,20 @@ export function Sidebar() {
           );
         })}
       </nav>
+      <div className="p-2 border-t border-sidebar-border">
+        <button
+          onClick={() => setHelpOpen(true)}
+          className="w-full flex items-center gap-3 px-3 h-10 rounded-lg text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          title="Help & support"
+        >
+          <HelpCircle className="h-4 w-4 shrink-0" />
+          {!sidebarCollapsed && <span>Help & Support</span>}
+        </button>
+      </div>
       {!sidebarCollapsed && (
         <div className="p-3 m-3 rounded-xl bg-primary-soft text-xs text-accent-foreground">
           <p className="font-medium mb-1">Tip</p>
-          <p className="text-muted-foreground">Press <kbd className="px-1 py-0.5 rounded bg-surface border text-[10px]">⌘K</kbd> to open the AI assistant.</p>
+          <p className="text-muted-foreground">Press <kbd className="px-1 py-0.5 rounded bg-surface border text-[10px]">⌘/</kbd> for all shortcuts.</p>
         </div>
       )}
     </aside>
@@ -83,7 +94,7 @@ export function MobileTabBar() {
       className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80"
       aria-label="Primary navigation"
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {MODULES.map((m) => {
           const Icon = m.icon;
           const active = module === m.id;
@@ -92,13 +103,13 @@ export function MobileTabBar() {
               <button
                 onClick={() => setModule(m.id)}
                 className={cn(
-                  "w-full flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                  "w-full flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
                 aria-current={active ? "page" : undefined}
               >
                 <Icon className="h-5 w-5" />
-                <span className="truncate max-w-[64px]">{m.label.split(" ")[0]}</span>
+                <span className="truncate max-w-[60px]">{m.label.split(" ")[0]}</span>
               </button>
             </li>
           );

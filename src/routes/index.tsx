@@ -9,6 +9,9 @@ import { MeetingSummarizer } from "@/components/flowstate/modules/MeetingSummari
 import { TaskPlanner } from "@/components/flowstate/modules/TaskPlanner";
 import { ResearchAssistant } from "@/components/flowstate/modules/ResearchAssistant";
 import { SettingsPanel } from "@/components/flowstate/SettingsPanel";
+import { Analytics } from "@/components/flowstate/modules/Analytics";
+import { ShortcutsModal } from "@/components/flowstate/ShortcutsModal";
+import { HelpModal } from "@/components/flowstate/HelpModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,22 +44,25 @@ function Shell() {
         <main className="flex-1 px-4 py-5 lg:px-8 lg:py-7 pb-24 lg:pb-10 max-w-5xl w-full mx-auto">
           {!focusMode && (
             <div className="mb-5 hidden lg:block">
-              <p className="text-xs text-muted-foreground">Module {moduleNumber(module)} of 4</p>
+              <p className="text-xs text-muted-foreground">Module {moduleNumber(module)} of 5</p>
             </div>
           )}
           {module === "email" && <EmailGenerator />}
           {module === "meeting" && <MeetingSummarizer />}
           {module === "tasks" && <TaskPlanner />}
           {module === "research" && <ResearchAssistant />}
+          {module === "analytics" && <Analytics />}
         </main>
       </div>
       <MobileTabBar />
       <Chatbot />
       <SettingsPanel />
+      <ShortcutsModal />
+      <HelpModal />
     </div>
   );
 }
 
 function moduleNumber(m: string) {
-  return { email: 1, meeting: 2, tasks: 3, research: 4 }[m as "email"] ?? 1;
+  return { email: 1, meeting: 2, tasks: 3, research: 4, analytics: 5 }[m as "email"] ?? 1;
 }
