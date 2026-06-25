@@ -3,6 +3,7 @@ import { useApp } from "../state";
 import { DisclaimerBanner, SectionShell, SkeletonLines, EmptyState } from "../shared";
 import { Mail, Copy, RotateCcw, Undo2, Sparkles, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { aiClient, ApiError } from "@/lib/aiClient";
 
 type Tone = "Formal" | "Friendly" | "Persuasive" | "Diplomatic";
 const TONES: Tone[] = ["Formal", "Friendly", "Persuasive", "Diplomatic"];
@@ -14,29 +15,8 @@ const SAMPLE = {
   tone: "Persuasive" as Tone,
 };
 
-function generateEmail(input: { recipientRole: string; subject: string; context: string; tone: Tone }) {
-  // Placeholder simulation. Real API call would go here.
-  const greeting = input.tone === "Friendly" ? "Hi there," : input.tone === "Formal" ? "Dear Colleague," : "Hello,";
-  const closing = input.tone === "Friendly" ? "Cheers," : input.tone === "Formal" ? "Sincerely," : "Best regards,";
-  const bullets = input.context.split("\n").filter(Boolean).map((l) => l.replace(/^[-*•]\s*/, "")).filter(Boolean);
-  const intro =
-    input.tone === "Persuasive"
-      ? `I'd like to share a focused proposal regarding ${input.subject.toLowerCase()}.`
-      : input.tone === "Diplomatic"
-      ? `I wanted to gather your perspective on ${input.subject.toLowerCase()} before we move forward.`
-      : `I'm writing to ${input.recipientRole ? `you as ${input.recipientRole.toLowerCase()} ` : ""}about ${input.subject.toLowerCase()}.`;
-  const body = bullets.length
-    ? `\n\nHere are the key points:\n${bullets.map((b) => `• ${b}`).join("\n")}`
-    : "";
-  const cta =
-    input.tone === "Persuasive"
-      ? "\n\nCould we set up 20 minutes this week to align on next steps?"
-      : "\n\nLet me know what you think when you have a moment.";
-  return `${greeting}\n\n${intro}${body}${cta}\n\n${closing}\nYour Name`;
-}
-
 export function EmailGenerator() {
-  const { emailPrefill, setEmailPrefill } = useApp();
+  const { emailPrefill, setEmailPrefill, setSettingsOpen } = useApp();
   const [recipientRole, setRecipientRole] = useState("");
   const [subject, setSubject] = useState("");
   const [context, setContext] = useState("");
@@ -56,21 +36,25 @@ export function EmailGenerator() {
     }
   }, [emailPrefill, setEmailPrefill]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!subject && !context) {
       toast.error("Add a subject or some context first.");
       return;
     }
     setLoading(true);
     setOutput("");
-    // Simulate AI call
-    setTimeout(() => {
-      const result = generateEmail({ recipientRole, subject, context, tone });
-      setOutput(result);
-      setOriginal(result);
-      setLoading(false);
+    try {
+      const { email } = await aiClient.generateEmail({ recipientRole, subject, context, tone });
+      setOutput(email);
+      setOriginal(email);
       toast.success("Email drafted");
-    }, 900);
+    } catch (err) {
+      const e = err as ApiError;
+      toast.error(e.message);
+      if (e.isMissingKey) setSettingsOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadSample = () => {

@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApp } from "../state";
 import { DisclaimerBanner, SectionShell, SkeletonLines, EmptyState } from "../shared";
 import { FileText, Download, Mail, Sparkles, RotateCcw, Info } from "lucide-react";
 import { toast } from "sonner";
+import { aiClient, ApiError } from "@/lib/aiClient";
 
 type ActionItem = { id: string; text: string; owner: string; due: string; done: boolean; confidence: number };
 type Decision = { id: string; text: string; confidence: number };
-type Result = { summary: string; actions: ActionItem[]; decisions: Decision[] };
+type Result = { summary: string; actions: ActionItem[]; decisions: Decision[]; followUp: string[] };
 
 const SAMPLE_NOTES = `Team standup - Sept 23
 Attendees: Maya (PM), Tom (Eng), Priya (Design), Alex (Marketing)
@@ -18,35 +20,6 @@ Attendees: Maya (PM), Tom (Eng), Priya (Design), Alex (Marketing)
 - Decision: Marketing gets feature list by Oct 1, no exceptions.
 - Action: Tom to send Priya auth wireframes today.
 - Maya to update roadmap doc by Thursday.`;
-
-function summarize(notes: string): Result {
-  // Placeholder. Real model call would go here.
-  const lines = notes.split("\n").map((l) => l.trim()).filter(Boolean);
-  const actionLines = lines.filter((l) => /action|will|todo|need(s)?\s|by\s+\w/i.test(l));
-  const decisionLines = lines.filter((l) => /^decision/i.test(l));
-  return {
-    summary:
-      "The team reviewed Q3 launch slippage and agreed to lock scope by Friday. Engineering is blocked on auth migration pending design input. Marketing needs a finalized feature list before the Oct 5 press embargo. Dark mode was cut from launch to protect timeline.",
-    actions: actionLines.slice(0, 5).map((l, i) => ({
-      id: `a${i}`,
-      text: l.replace(/^[-•]\s*/, "").replace(/^(Action:?\s*)/i, ""),
-      owner: ["Tom", "Maya", "Priya", "Alex", "Team"][i % 5],
-      due: ["Wed", "Thu", "Fri", "Oct 1", "Oct 5"][i % 5],
-      done: false,
-      confidence: 0.6 + (i % 4) * 0.1,
-    })),
-    decisions: decisionLines.length
-      ? decisionLines.map((l, i) => ({
-          id: `d${i}`,
-          text: l.replace(/^decision:?\s*/i, ""),
-          confidence: 0.75 + (i % 3) * 0.08,
-        }))
-      : [
-          { id: "d0", text: "Cut dark mode from launch; revisit Q4.", confidence: 0.92 },
-          { id: "d1", text: "Final feature list to marketing by Oct 1.", confidence: 0.88 },
-        ],
-  };
-}
 
 function ConfidenceBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
@@ -63,23 +36,53 @@ function ConfidenceBadge({ score }: { score: number }) {
 }
 
 export function MeetingSummarizer() {
+  const { meetingPrefill, setMeetingPrefill, setSettingsOpen } = useApp();
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [tab, setTab] = useState<"summary" | "actions" | "decisions">("summary");
 
-  const run = () => {
+  useEffect(() => {
+    if (meetingPrefill?.notes) {
+      setNotes(meetingPrefill.notes);
+      setMeetingPrefill(null);
+    }
+  }, [meetingPrefill, setMeetingPrefill]);
+
+  const run = async () => {
     if (!notes.trim()) {
       toast.error("Paste some notes first.");
       return;
     }
     setLoading(true);
     setResult(null);
-    setTimeout(() => {
-      setResult(summarize(notes));
-      setLoading(false);
+    try {
+      const data = await aiClient.summarizeNotes({ notes });
+      setResult({
+        summary: data.summary,
+        actions: data.action_items.map((a, i) => ({
+          id: `a${i}`,
+          text: a.task ?? "",
+          owner: a.owner ?? "Unassigned",
+          due: a.deadline ?? "TBD",
+          done: false,
+          confidence: typeof a.confidence === "number" ? Math.max(0, Math.min(1, a.confidence)) : 0.5,
+        })),
+        decisions: data.decisions.map((d, i) => ({
+          id: `d${i}`,
+          text: d.text ?? "",
+          confidence: typeof d.confidence === "number" ? Math.max(0, Math.min(1, d.confidence)) : 0.5,
+        })),
+        followUp: data.follow_up ?? [],
+      });
       toast.success("Notes summarized");
-    }, 1100);
+    } catch (err) {
+      const e = err as ApiError;
+      toast.error(e.message);
+      if (e.isMissingKey) setSettingsOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleDone = (id: string) => {
@@ -167,12 +170,29 @@ export function MeetingSummarizer() {
             </div>
 
             {tab === "summary" && (
-              <textarea
-                value={result.summary}
-                onChange={(e) => setResult({ ...result, summary: e.target.value })}
-                rows={6}
-                className="w-full p-3 rounded-lg border border-input bg-surface text-sm leading-relaxed focus:border-ring outline-none"
-              />
+              <div className="space-y-4">
+                <textarea
+                  value={result.summary}
+                  onChange={(e) => setResult({ ...result, summary: e.target.value })}
+                  rows={6}
+                  className="w-full p-3 rounded-lg border border-input bg-surface text-sm leading-relaxed focus:border-ring outline-none"
+                />
+                {result.followUp.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                      Follow-up questions
+                    </h3>
+                    <ul className="space-y-1.5">
+                      {result.followUp.map((q, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="mt-0.5 text-primary font-semibold">?</span>
+                          <span>{q}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             )}
 
             {tab === "actions" && (

@@ -9,6 +9,10 @@ export type EmailPrefill = {
   tone?: "Formal" | "Friendly" | "Persuasive" | "Diplomatic";
 };
 
+export type MeetingPrefill = { notes?: string };
+export type TaskPrefill = { input?: string };
+export type ResearchPrefill = { text?: string };
+
 type AppState = {
   module: ModuleId;
   setModule: (m: ModuleId) => void;
@@ -20,8 +24,16 @@ type AppState = {
   setChatOpen: (v: boolean) => void;
   focusMode: boolean;
   setFocusMode: (v: boolean) => void;
+  settingsOpen: boolean;
+  setSettingsOpen: (v: boolean) => void;
   emailPrefill: EmailPrefill | null;
   setEmailPrefill: (p: EmailPrefill | null) => void;
+  meetingPrefill: MeetingPrefill | null;
+  setMeetingPrefill: (p: MeetingPrefill | null) => void;
+  taskPrefill: TaskPrefill | null;
+  setTaskPrefill: (p: TaskPrefill | null) => void;
+  researchPrefill: ResearchPrefill | null;
+  setResearchPrefill: (p: ResearchPrefill | null) => void;
   dismissedBanner: Record<ModuleId, boolean>;
   dismissBanner: (m: ModuleId) => void;
 };
@@ -34,7 +46,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [emailPrefill, setEmailPrefill] = useState<EmailPrefill | null>(null);
+  const [meetingPrefill, setMeetingPrefill] = useState<MeetingPrefill | null>(null);
+  const [taskPrefill, setTaskPrefill] = useState<TaskPrefill | null>(null);
+  const [researchPrefill, setResearchPrefill] = useState<ResearchPrefill | null>(null);
   const [dismissedBanner, setDismissed] = useState<Record<ModuleId, boolean>>({
     email: false, meeting: false, tasks: false, research: false,
   });
@@ -92,7 +108,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     sidebarCollapsed, toggleSidebar: () => setSidebarCollapsed((v) => !v),
     chatOpen, setChatOpen,
     focusMode, setFocusMode,
+    settingsOpen, setSettingsOpen,
     emailPrefill, setEmailPrefill,
+    meetingPrefill, setMeetingPrefill,
+    taskPrefill, setTaskPrefill,
+    researchPrefill, setResearchPrefill,
     dismissedBanner, dismissBanner,
   };
 

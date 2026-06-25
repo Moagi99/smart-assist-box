@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiSummarizeNotesRouteImport } from './routes/api/summarize-notes'
+import { Route as ApiPlanTasksRouteImport } from './routes/api/plan-tasks'
+import { Route as ApiGenerateEmailRouteImport } from './routes/api/generate-email'
+import { Route as ApiChatRouteRouteImport } from './routes/api/chat-route'
+import { Route as ApiAnalyzeResearchRouteImport } from './routes/api/analyze-research'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSummarizeNotesRoute = ApiSummarizeNotesRouteImport.update({
+  id: '/api/summarize-notes',
+  path: '/api/summarize-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlanTasksRoute = ApiPlanTasksRouteImport.update({
+  id: '/api/plan-tasks',
+  path: '/api/plan-tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGenerateEmailRoute = ApiGenerateEmailRouteImport.update({
+  id: '/api/generate-email',
+  path: '/api/generate-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRouteRoute = ApiChatRouteRouteImport.update({
+  id: '/api/chat-route',
+  path: '/api/chat-route',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAnalyzeResearchRoute = ApiAnalyzeResearchRouteImport.update({
+  id: '/api/analyze-research',
+  path: '/api/analyze-research',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/analyze-research': typeof ApiAnalyzeResearchRoute
+  '/api/chat-route': typeof ApiChatRouteRoute
+  '/api/generate-email': typeof ApiGenerateEmailRoute
+  '/api/plan-tasks': typeof ApiPlanTasksRoute
+  '/api/summarize-notes': typeof ApiSummarizeNotesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/analyze-research': typeof ApiAnalyzeResearchRoute
+  '/api/chat-route': typeof ApiChatRouteRoute
+  '/api/generate-email': typeof ApiGenerateEmailRoute
+  '/api/plan-tasks': typeof ApiPlanTasksRoute
+  '/api/summarize-notes': typeof ApiSummarizeNotesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/analyze-research': typeof ApiAnalyzeResearchRoute
+  '/api/chat-route': typeof ApiChatRouteRoute
+  '/api/generate-email': typeof ApiGenerateEmailRoute
+  '/api/plan-tasks': typeof ApiPlanTasksRoute
+  '/api/summarize-notes': typeof ApiSummarizeNotesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/analyze-research'
+    | '/api/chat-route'
+    | '/api/generate-email'
+    | '/api/plan-tasks'
+    | '/api/summarize-notes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/analyze-research'
+    | '/api/chat-route'
+    | '/api/generate-email'
+    | '/api/plan-tasks'
+    | '/api/summarize-notes'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/analyze-research'
+    | '/api/chat-route'
+    | '/api/generate-email'
+    | '/api/plan-tasks'
+    | '/api/summarize-notes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiAnalyzeResearchRoute: typeof ApiAnalyzeResearchRoute
+  ApiChatRouteRoute: typeof ApiChatRouteRoute
+  ApiGenerateEmailRoute: typeof ApiGenerateEmailRoute
+  ApiPlanTasksRoute: typeof ApiPlanTasksRoute
+  ApiSummarizeNotesRoute: typeof ApiSummarizeNotesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/summarize-notes': {
+      id: '/api/summarize-notes'
+      path: '/api/summarize-notes'
+      fullPath: '/api/summarize-notes'
+      preLoaderRoute: typeof ApiSummarizeNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/plan-tasks': {
+      id: '/api/plan-tasks'
+      path: '/api/plan-tasks'
+      fullPath: '/api/plan-tasks'
+      preLoaderRoute: typeof ApiPlanTasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate-email': {
+      id: '/api/generate-email'
+      path: '/api/generate-email'
+      fullPath: '/api/generate-email'
+      preLoaderRoute: typeof ApiGenerateEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat-route': {
+      id: '/api/chat-route'
+      path: '/api/chat-route'
+      fullPath: '/api/chat-route'
+      preLoaderRoute: typeof ApiChatRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/analyze-research': {
+      id: '/api/analyze-research'
+      path: '/api/analyze-research'
+      fullPath: '/api/analyze-research'
+      preLoaderRoute: typeof ApiAnalyzeResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiAnalyzeResearchRoute: ApiAnalyzeResearchRoute,
+  ApiChatRouteRoute: ApiChatRouteRoute,
+  ApiGenerateEmailRoute: ApiGenerateEmailRoute,
+  ApiPlanTasksRoute: ApiPlanTasksRoute,
+  ApiSummarizeNotesRoute: ApiSummarizeNotesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp, type ModuleId } from "./state";
 import { TypingDots } from "./shared";
+import { aiClient, ApiError, type ChatTurn } from "@/lib/aiClient";
 import { MessageSquare, X, Send, Trash2, Mail, FileText, CalendarDays, Search, Workflow } from "lucide-react";
 
-type Route = { module: ModuleId; label: string; icon: typeof Mail; prefillContext?: string } | null;
+type Route = { module: ModuleId; label: string; prefill: Record<string, string> } | null;
 
 type Msg = {
   id: string;
@@ -21,33 +22,12 @@ const MODULE_LABEL: Record<ModuleId, string> = {
 
 const STORAGE_KEY = "flowstate.chat";
 
-function detectRoute(input: string): Route {
-  const s = input.toLowerCase();
-  if (/(email|draft|reply|write to|message)/.test(s)) {
-    return { module: "email", label: "Open Email Generator", icon: Mail, prefillContext: input };
-  }
-  if (/(meeting|summary|summarize|notes|transcript|action items)/.test(s)) {
-    return { module: "meeting", label: "Open Meeting Summarizer", icon: FileText };
-  }
-  if (/(plan|schedule|task|todo|by friday|by monday|week)/.test(s)) {
-    return { module: "tasks", label: "Open Task Planner", icon: CalendarDays };
-  }
-  if (/(research|analyze|article|source|claim|bias|fact)/.test(s)) {
-    return { module: "research", label: "Open Research Assistant", icon: Search };
-  }
-  return null;
-}
-
-function reply(input: string, route: Route): string {
-  if (route?.module === "email") return "I can help draft that email. Open the Email Generator and I'll pre-fill the context.";
-  if (route?.module === "meeting") return "Paste your raw notes in the Meeting Summarizer and I'll extract decisions, owners, and deadlines.";
-  if (route?.module === "tasks") return "Drop your task list in the Planner and I'll lay out a weekly schedule with priority scores.";
-  if (route?.module === "research") return "Open the Research Assistant and paste the article — I'll flag weak claims and bias.";
-  return "I can route you to any of the four modules. Try: \"draft an email to my manager\", \"summarize these notes\", \"plan my week\", or \"analyze this article\".";
-}
-
 export function Chatbot() {
-  const { chatOpen, setChatOpen, setModule, setEmailPrefill } = useApp();
+  const {
+    chatOpen, setChatOpen, setModule,
+    setEmailPrefill, setMeetingPrefill, setTaskPrefill, setResearchPrefill,
+    setSettingsOpen,
+  } = useApp();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -65,37 +45,64 @@ export function Chatbot() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const send = () => {
+  const send = async () => {
     const text = input.trim();
     if (!text) return;
-    const route = detectRoute(text);
     const userMsg: Msg = { id: Math.random().toString(36).slice(2), role: "user", text };
     setMessages((prev) => [...prev.slice(-9), userMsg]);
     setInput("");
     setTyping(true);
-    // Simulated response
-    setTimeout(() => {
+    try {
+      // Maintain memory of last 5 turns (10 messages)
+      const history: ChatTurn[] = [...messages, userMsg]
+        .slice(-10)
+        .map((m) => ({ role: m.role, text: m.text }));
+      const data = await aiClient.chatRoute({ message: text, history });
+      const route: Route = data.module
+        ? { module: data.module, label: `Open ${MODULE_LABEL[data.module]}`, prefill: data.prefill ?? {} }
+        : null;
       const assistantMsg: Msg = {
         id: Math.random().toString(36).slice(2),
         role: "assistant",
-        text: reply(text, route),
+        text: data.reply || "Here's what I came up with.",
         route: route ?? undefined,
       };
       setMessages((prev) => [...prev.slice(-9), assistantMsg]);
+    } catch (err) {
+      const e = err as ApiError;
+      const assistantMsg: Msg = {
+        id: Math.random().toString(36).slice(2),
+        role: "assistant",
+        text: e.message,
+      };
+      setMessages((prev) => [...prev.slice(-9), assistantMsg]);
+      if (e.isMissingKey) setSettingsOpen(true);
+    } finally {
       setTyping(false);
-    }, 700);
+    }
   };
 
-  const route = (r: Route) => {
+  const goTo = (r: Route) => {
     if (!r) return;
-    setModule(r.module);
-    if (r.module === "email" && r.prefillContext) {
-      setEmailPrefill({ context: r.prefillContext.replace(/^(draft|write|send|reply|email)\s*(an?|the)?\s*/i, "").trim() });
+    if (r.module === "email") {
+      setEmailPrefill({
+        recipientRole: r.prefill.recipientRole,
+        subject: r.prefill.subject,
+        context: r.prefill.context,
+        tone: (r.prefill.tone as "Formal" | "Friendly" | "Persuasive" | "Diplomatic") || undefined,
+      });
+    } else if (r.module === "meeting") {
+      setMeetingPrefill({ notes: r.prefill.notes });
+    } else if (r.module === "tasks") {
+      setTaskPrefill({ input: r.prefill.input });
+    } else if (r.module === "research") {
+      setResearchPrefill({ text: r.prefill.text });
     }
+    setModule(r.module);
     setChatOpen(false);
   };
 
-  const turns = messages.slice(-10); // last 5 turns = 10 messages
+  const turns = messages.slice(-10);
 
   return (
     <>
@@ -151,7 +158,7 @@ export function Chatbot() {
                   <p className="leading-relaxed whitespace-pre-wrap">{m.text}</p>
                   {m.route && (
                     <button
-                      onClick={() => route(m.route!)}
+                      onClick={() => goTo(m.route!)}
                       className="mt-2 w-full inline-flex items-center gap-2 px-2.5 h-8 rounded-lg bg-surface border border-border text-foreground text-xs font-medium hover:bg-muted"
                     >
                       {(() => { const Icon = MODULE_ICON[m.route.module]; return <Icon className="h-3.5 w-3.5 text-primary" />; })()}
@@ -184,7 +191,7 @@ export function Chatbot() {
               />
               <button
                 onClick={send}
-                disabled={!input.trim()}
+                disabled={!input.trim() || typing}
                 className="grid place-items-center h-9 w-9 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
                 aria-label="Send"
               >
