@@ -34,36 +34,36 @@ A floating chatbot can classify intent and pre-fill any module — "Summarize th
 - Copy to clipboard · Download as `.txt`
 - Typing reveal animation with skip button
 
-### 📝 Meeting Notes Summarizer
+###  Meeting Notes Summarizer
 - Tabs for Executive Summary, Action Items (owner + deadline), Key Decisions, Follow-ups
 - Per-item confidence scores with tooltips
 - Export as PDF (print-to-PDF) · Email summary via `mailto:` link
 - Check off action items with a success micro-animation
 
-### 🗓 AI Task Planner
+###  AI Task Planner
 - Natural language → 5-day grid with priority (High / Medium / Low) and durations
 - Drag-and-drop reschedule · per-day total hours · `>8h` overload warning
 - **List ↔ Calendar** toggle with month view, colored priority dots, "Today" button
 - Overdue tasks shown with strikethrough + red border
 - Export as `.ics` · Copy as plain text
 
-### 🔍 AI Research Assistant
+###  AI Research Assistant
 - TL;DR, key claims with evidence-strength rating, bias flags, recommendations
 - **Skeptic Mode** surfaces counter-arguments inline
 - Export as `.md` markdown · Copy citations list
 
-### 📊 Analytics
+###  Analytics
 - Weekly module usage bar chart (Recharts)
 - Estimated time saved · average meeting confidence
 - Empty state until you start using FlowState
 - 100% local — `localStorage` only
 
-### 🤖 Persistent Chatbot
+###  Persistent Chatbot
 - Floating bubble, `⌘K` to toggle
 - Intent classification routes you to the right module with pre-filled forms
 - History persisted (last 10 turns)
 
-### ✨ Premium polish
+###  Premium polish
 - Progressive typing animation with cursor blink, variable cadence, skip-after-1s
 - Respects `prefers-reduced-motion`
 - Pop-in checkmark micro-animation on copy / export / save
@@ -199,13 +199,13 @@ When the header is absent, the server falls back to `process.env.OPENAI_API_KEY`
 
 FlowState ships with concrete safeguards rather than vague disclaimers:
 
-- 🟡 **Inline disclaimers** on every module ("AI-generated — review before sending")
-- ✏️ **Always editable** — generated text is a starting point, never the final word
-- 📊 **Confidence scores** on extracted action items and decisions
-- 🧭 **Skeptic Mode** for counter-arguments and bias flags on research
-- ⚠️ **Overload warnings** when the planner exceeds 8 hours/day
-- 📤 **No auto-send** — email drafts open `mailto:` or download as `.txt`; the user always hits Send
-- 🔒 **Local-first** — API keys, chat history, preferences, and analytics live in your browser
+-  **Inline disclaimers** on every module ("AI-generated — review before sending")
+-  **Always editable** — generated text is a starting point, never the final word
+-  **Confidence scores** on extracted action items and decisions
+-  **Skeptic Mode** for counter-arguments and bias flags on research
+-  **Overload warnings** when the planner exceeds 8 hours/day
+-  **No auto-send** — email drafts open `mailto:` or download as `.txt`; the user always hits Send
+-  **Local-first** — API keys, chat history, preferences, and analytics live in your browser
 
 ## License
 
