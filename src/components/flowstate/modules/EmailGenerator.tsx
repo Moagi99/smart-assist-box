@@ -36,21 +36,25 @@ export function EmailGenerator() {
     }
   }, [emailPrefill, setEmailPrefill]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!subject && !context) {
       toast.error("Add a subject or some context first.");
       return;
     }
     setLoading(true);
     setOutput("");
-    // Simulate AI call
-    setTimeout(() => {
-      const result = generateEmail({ recipientRole, subject, context, tone });
-      setOutput(result);
-      setOriginal(result);
-      setLoading(false);
+    try {
+      const { email } = await aiClient.generateEmail({ recipientRole, subject, context, tone });
+      setOutput(email);
+      setOriginal(email);
       toast.success("Email drafted");
-    }, 900);
+    } catch (err) {
+      const e = err as ApiError;
+      toast.error(e.message);
+      if (e.isMissingKey) setSettingsOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadSample = () => {
