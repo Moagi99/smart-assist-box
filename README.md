@@ -1,162 +1,212 @@
 # FlowState
 
-**AI-powered workplace automation for professionals.**
+> **Calm, AI-powered automation for everyday workplace tasks.**
 
-FlowState is a modern, responsive single-page dashboard that helps you automate common workplace tasks using AI. It features five integrated modules — Smart Email Generator, Meeting Notes Summarizer, AI Task Planner, Research Assistant, and an intelligent Chatbot — all wrapped in a clean, calm-tech interface.
+FlowState is a single-page dashboard that helps professionals draft email, summarize meeting notes, plan their week, and analyze research — all from one focused workspace, with a persistent AI assistant one shortcut away.
+
+---
+
+## Overview
+
+FlowState bundles five AI modules into a quiet, keyboard-first interface designed around the "Calm Tech" aesthetic. It uses OpenAI (`gpt-4o-mini`) under the hood, but every output is editable, explainable, and exportable — the human stays in the driver's seat.
+
+## Problem Statement
+
+Knowledge workers lose hours every week to repetitive writing tasks: rewording emails for tone, reformatting messy meeting notes into action items, juggling task lists across tools, and skimming long articles for the parts that actually matter. Existing AI tools solve fragments of this, but force users to swap between five tabs, copy-paste prompts, and trust opaque outputs.
+
+## Solution
+
+FlowState gives each common task its own purpose-built module, sharing a single state, settings panel, and chat assistant:
+
+1. **Smart Email Generator** — role + tone + bullets → editable draft
+2. **Meeting Notes Summarizer** — raw notes → summary, action items, decisions
+3. **AI Task Planner** — natural language → weekly schedule + overload detection
+4. **AI Research Assistant** — article/URL → TL;DR, key claims, bias flags, skeptic mode
+5. **Analytics** — local usage, time saved, average confidence
+
+A floating chatbot can classify intent and pre-fill any module — "Summarize the notes I just pasted" routes you straight to the right tool.
 
 ## Features
 
-### 1. Smart Email Generator
-Draft professional emails in seconds. Choose from four tones — Formal, Friendly, Persuasive, or Diplomatic — and let AI compose a polished message from bullet-point context. Edit inline and copy to your clipboard with one click.
+### 📧 Smart Email Generator
+- Recipient role, subject, free-form context, four tones (Formal / Friendly / Persuasive / Diplomatic)
+- Editable output with responsible-AI disclaimer
+- Copy to clipboard · Download as `.txt`
+- Typing reveal animation with skip button
 
-### 2. Meeting Notes Summarizer
-Paste raw meeting notes and get structured output across three tabs: an Executive Summary, Action Items (with owner, deadline, and confidence scores), and Key Decisions. Every extraction is rated so you know where to double-check.
+### 📝 Meeting Notes Summarizer
+- Tabs for Executive Summary, Action Items (owner + deadline), Key Decisions, Follow-ups
+- Per-item confidence scores with tooltips
+- Export as PDF (print-to-PDF) · Email summary via `mailto:` link
+- Check off action items with a success micro-animation
 
-### 3. AI Task Planner
-Describe your week in natural language and receive a visual 5-day schedule with priority levels (High / Medium / Low), estimated durations, and overload warnings when any day exceeds 8 hours.
+### 🗓 AI Task Planner
+- Natural language → 5-day grid with priority (High / Medium / Low) and durations
+- Drag-and-drop reschedule · per-day total hours · `>8h` overload warning
+- **List ↔ Calendar** toggle with month view, colored priority dots, "Today" button
+- Overdue tasks shown with strikethrough + red border
+- Export as `.ics` · Copy as plain text
 
-### 4. AI Research Assistant
-Paste an article or research topic for instant analysis: a TL;DR summary, Key Claims with evidence-strength ratings, bias flags, and — in Skeptic Mode — counter-arguments and potential weaknesses.
+### 🔍 AI Research Assistant
+- TL;DR, key claims with evidence-strength rating, bias flags, recommendations
+- **Skeptic Mode** surfaces counter-arguments inline
+- Export as `.md` markdown · Copy citations list
 
-### 5. AI Chatbot Interface
-A persistent floating assistant that routes you to the right module, pre-fills forms from natural-language requests (e.g. *"Draft a formal email to HR about leave"*), and remembers the last 5 conversation turns.
+### 📊 Analytics
+- Weekly module usage bar chart (Recharts)
+- Estimated time saved · average meeting confidence
+- Empty state until you start using FlowState
+- 100% local — `localStorage` only
 
-### Design & UX
-- **Calm Tech** aesthetic — Slate, Indigo, and Emerald palette
-- Collapsible sidebar with a **Focus Mode** for distraction-free work
-- Full **dark mode** support (system preference + manual toggle)
-- Mobile-responsive: sidebar becomes a bottom navigation bar on small screens
-- Subtle animations — loading skeletons, shimmer effects, smooth transitions
-- Keyboard shortcuts: `Cmd/Ctrl+K` for chat, `Cmd/Ctrl+1–4` to switch modules
-- Accessible: ARIA labels, focus rings, keyboard navigation, reduced-motion support
+### 🤖 Persistent Chatbot
+- Floating bubble, `⌘K` to toggle
+- Intent classification routes you to the right module with pre-filled forms
+- History persisted (last 10 turns)
 
----
+### ✨ Premium polish
+- Progressive typing animation with cursor blink, variable cadence, skip-after-1s
+- Respects `prefers-reduced-motion`
+- Pop-in checkmark micro-animation on copy / export / save
+- `⌘?` opens a keyboard-shortcut overlay
+- Help & Support modal in sidebar footer
+- Dark mode · collapsible "Focus Mode" sidebar · bottom tabbar on mobile
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | [TanStack Start](https://tanstack.com/start) (React 19 + Vite 7 + file-based routing) |
-| Styling | Tailwind CSS v4 with custom OKLCH theme tokens |
-| UI Components | Radix UI primitives + shadcn/ui |
-| State | React Context + `useReducer` |
-| Backend | TanStack server functions (edge-compatible) |
-| AI Provider | OpenAI GPT-4o-mini via backend API routes |
-| Icons | Lucide React |
-| Charts | Recharts |
-
----
+| Layer            | Choice                                            |
+| ---------------- | ------------------------------------------------- |
+| Framework        | React 18 + TanStack Start (file-based routing)    |
+| Styling          | Tailwind CSS v4 (OKLCH tokens, custom theme)      |
+| UI Components    | Custom + shadcn primitives, `sonner` for toasts   |
+| State            | React Context + `localStorage` persistence        |
+| Backend          | TanStack Start serverless routes (`/api/*`)       |
+| AI Provider      | OpenAI `gpt-4o-mini` (JSON mode)                  |
+| Icons            | `lucide-react`                                    |
+| Charts           | `recharts`                                        |
+| Runtime          | Bun (Node 18+ also supported)                     |
 
 ## Getting Started
 
 ### Prerequisites
-- [Bun](https://bun.sh/) (recommended) or Node.js 20+
-- An [OpenAI API key](https://platform.openai.com/api-keys)
+- **Bun** ≥ 1.1 *(or Node ≥ 18 + npm)*
+- An **OpenAI API key** (`sk-…`)
 
 ### Installation
-
 ```bash
-# Clone the repository
-git clone <repo-url>
+git clone https://github.com/<your-org>/flowstate.git
 cd flowstate
-
-# Install dependencies
-bun install
-
-# Set up environment variables
-cp .env.local.example .env.local
-# Edit .env.local and add your OpenAI API key (optional — users can also enter it in-app)
+bun install        # or: npm install
 ```
 
-### Running locally
-
+### Run locally
 ```bash
-bun dev
+bun dev            # or: npm run dev
+# open http://localhost:5173
 ```
 
-The dev server starts on `http://localhost:8080` by default.
+On first run, click the **Settings** gear and paste your OpenAI API key. It's stored only in your browser's `localStorage` and forwarded to the backend per request via an `X-OpenAI-Key` header — never logged.
 
-### Building for production
-
+### Build for production
 ```bash
-bun run build
+bun run build      # or: npm run build
+bun run start      # or: npm run start
 ```
-
----
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── flowstate/          # App-specific components
-│   │   ├── modules/        # Email, Meeting, Tasks, Research modules
-│   │   ├── state.tsx        # Global state provider
-│   │   ├── Sidebar.tsx      # Desktop sidebar + mobile tab bar
-│   │   ├── Header.tsx       # Top bar with settings toggle
-│   │   ├── Chatbot.tsx      # Floating chat interface
-│   │   ├── SettingsPanel.tsx# API key & preferences
-│   │   └── shared.tsx       # Disclaimer banners, shells, skeletons
-│   └── ui/                 # shadcn/ui primitives (Button, Card, Dialog, Tabs, etc.)
+│   └── flowstate/
+│       ├── modules/
+│       │   ├── EmailGenerator.tsx
+│       │   ├── MeetingSummarizer.tsx
+│       │   ├── TaskPlanner.tsx
+│       │   ├── ResearchAssistant.tsx
+│       │   └── Analytics.tsx
+│       ├── Chatbot.tsx
+│       ├── Sidebar.tsx
+│       ├── Header.tsx
+│       ├── SettingsPanel.tsx
+│       ├── ShortcutsModal.tsx
+│       ├── HelpModal.tsx
+│       ├── Modal.tsx
+│       ├── Flash.tsx          ← success/warn micro-animation
+│       ├── typing.tsx         ← typewriter hook + <TypedText>
+│       ├── shared.tsx         ← Disclaimer, Skeletons, EmptyState
+│       └── state.tsx          ← AppProvider + keyboard shortcuts
 ├── lib/
-│   ├── aiClient.ts         # Centralized frontend API client
-│   ├── openai.server.ts    # Shared server-side OpenAI helper
-│   └── utils.ts            # cn() and other utilities
+│   ├── aiClient.ts            ← frontend fetch wrapper
+│   ├── openai.server.ts       ← server OpenAI client
+│   ├── analytics.ts           ← usage + time-saved tracking
+│   └── exports.ts             ← Blob/.ics/.md/mailto helpers
 ├── routes/
-│   ├── index.tsx           # Main dashboard shell
-│   ├── __root.tsx          # Root layout + error boundaries
-│   └── api/                # Server API routes
+│   ├── __root.tsx
+│   ├── index.tsx              ← dashboard shell
+│   └── api/
 │       ├── generate-email.ts
 │       ├── summarize-notes.ts
 │       ├── plan-tasks.ts
 │       ├── analyze-research.ts
 │       └── chat-route.ts
-├── styles.css              # Tailwind v4 theme, animations, custom utilities
-└── router.tsx               # TanStack Router configuration
+└── styles.css
 ```
-
----
 
 ## API Endpoints
 
-All AI features are powered by backend routes that proxy requests to OpenAI. The frontend sends the user's OpenAI API key via the `X-OpenAI-Key` header.
+| Method | Endpoint                  | Purpose                                                      |
+| ------ | ------------------------- | ------------------------------------------------------------ |
+| POST   | `/api/generate-email`     | Tone-controlled email draft from role + subject + context    |
+| POST   | `/api/summarize-notes`    | Structured summary, actions, decisions, follow-ups (JSON)    |
+| POST   | `/api/plan-tasks`         | Weekly schedule + overload warnings + totals (JSON)          |
+| POST   | `/api/analyze-research`   | TL;DR, claims, evidence, bias flags; optional skeptic mode   |
+| POST   | `/api/chat-route`         | Intent classification + module routing + form pre-fill       |
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| `POST` | `/api/generate-email` | Compose professional emails by tone |
-| `POST` | `/api/summarize-notes` | Extract summaries, action items, and decisions |
-| `POST` | `/api/plan-tasks` | Generate a weekly schedule from natural language |
-| `POST` | `/api/analyze-research` | Summarize and critique research text |
-| `POST` | `/api/chat-route` | Classify intent, route to modules, pre-fill forms |
-
----
+All routes accept the user's OpenAI key via the `X-OpenAI-Key` request header.
 
 ## Configuration
 
-### OpenAI API Key
+**Option 1 — In-app (recommended for evaluators):**
+Click the gear icon → paste your `sk-…` key → Save. Stored in `localStorage`.
 
-You can provide your OpenAI API key in two ways:
-
-1. **In-app Settings panel** (recommended for personal use) — the key is stored in `localStorage` and sent with every request.
-2. **Environment variable** — set `OPENAI_API_KEY` in `.env.local` as a server-side fallback.
-
-> The in-app Settings panel key always takes precedence. If neither is set, the app shows a friendly prompt to open Settings.
-
----
+**Option 2 — Environment variable (server fallback):**
+```bash
+# .env.local
+OPENAI_API_KEY=sk-...
+```
+When the header is absent, the server falls back to `process.env.OPENAI_API_KEY`.
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Cmd/Ctrl + K` | Open chatbot |
-| `Cmd/Ctrl + 1` | Switch to Email Generator |
-| `Cmd/Ctrl + 2` | Switch to Meeting Summarizer |
-| `Cmd/Ctrl + 3` | Switch to Task Planner |
-| `Cmd/Ctrl + 4` | Switch to Research Assistant |
-| `Esc` | Close panels / exit Focus Mode |
+| Shortcut         | Action                              |
+| ---------------- | ----------------------------------- |
+| `⌘K` / `Ctrl+K`  | Toggle chatbot                      |
+| `⌘1` … `⌘5`     | Jump to Email / Meeting / Tasks / Research / Analytics |
+| `⌘?`             | Open keyboard-shortcut overlay      |
+| `⌘.`             | Toggle Focus Mode (collapsed sidebar) |
+| `Esc`            | Close any open modal or panel       |
+| `Tab` / `Shift+Tab` | Standard focus navigation        |
 
----
+## Prompt Engineering
+
+- **Email** — few-shot tone exemplars + explicit constraints ("no fabricated facts", "preserve every bullet").
+- **Meeting Notes** — JSON-mode structured output with confidence scores; chain-of-thought is hidden via "think first, then return only the JSON".
+- **Task Planner** — JSON schema with priorities/durations; the model is instructed to flag any day exceeding 8 hours.
+- **Research Assistant** — two-pass behaviour: standard mode extracts claims; **skeptic mode** re-runs each claim through a "devil's advocate" prompt and adds counter-arguments.
+- **Chat Router** — strict intent-classification prompt returns one of `{email|meeting|tasks|research|null}` plus a `prefill` object, enabling deterministic UI routing on top of free-form chat.
+
+## Responsible AI
+
+FlowState ships with concrete safeguards rather than vague disclaimers:
+
+- 🟡 **Inline disclaimers** on every module ("AI-generated — review before sending")
+- ✏️ **Always editable** — generated text is a starting point, never the final word
+- 📊 **Confidence scores** on extracted action items and decisions
+- 🧭 **Skeptic Mode** for counter-arguments and bias flags on research
+- ⚠️ **Overload warnings** when the planner exceeds 8 hours/day
+- 📤 **No auto-send** — email drafts open `mailto:` or download as `.txt`; the user always hits Send
+- 🔒 **Local-first** — API keys, chat history, preferences, and analytics live in your browser
 
 ## License
 
-MIT
+[MIT](./LICENSE) © FlowState contributors
